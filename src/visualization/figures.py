@@ -447,7 +447,7 @@ def plot_choropleth(geo_data: gpd.GeoDataFrame, output: Path) -> None:
             vmax=norm.vmax,
             ax=ax,
             legend=False,
-            missing_kwds={"color": "#f0f0f0", "edgecolor": "#d0d0d0"},
+            missing_kwds={"color": "#e0e0e0", "edgecolor": "#c0c0c0"},
         )
         ax.set_title(period.replace("_", " ").title())
         ax.axis("off")

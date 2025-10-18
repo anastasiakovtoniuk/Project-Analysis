@@ -237,15 +237,23 @@ def aggregate_data(
             raise ValueError("Administrative boundaries file missing name attributes for join")
 
         admin["region_key"] = admin_name.str.strip()
-        region_period["region_key"] = region_period["region_name"].str.strip()
-        merge_cols = ["region_key", "geometry"]
+        admin_base = admin[["region_key", "geometry"]].copy()
         if "koatuu" in admin.columns:
-            merge_cols.append("koatuu")
-        merged = region_period.merge(
-            admin[merge_cols],
-            how="left",
-            on="region_key",
+            admin_base["koatuu"] = admin["koatuu"]
+
+        region_period["region_key"] = region_period["region_name"].str.strip()
+        periods_df = pd.DataFrame({"period": ["pre_war", "wartime"]})
+        admin_period = (
+            admin_base.assign(_key=1)
+            .merge(periods_df.assign(_key=1), on="_key")
+            .drop(columns="_key")
         )
+        merged = admin_period.merge(
+            region_period,
+            how="left",
+            on=["region_key", "period"],
+        )
+        merged["region_name"] = merged["region_name"].fillna(merged["region_key"])
         merged_gdf = gpd.GeoDataFrame(merged, geometry="geometry", crs=admin.crs)
         merged_gdf = merged_gdf.drop(columns=["region_key"], errors="ignore")
         merged_gdf.to_parquet(processed_dir / "region_period_pm25.parquet", index=False)
