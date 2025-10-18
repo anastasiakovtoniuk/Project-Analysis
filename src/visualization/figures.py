@@ -72,6 +72,7 @@ def plot_distribution_shift(
     )
     ax.set_xlim(0, max(40, x_max))
     ax.legend(frameon=False)
+    fig.subplots_adjust(top=0.88, bottom=0.15, left=0.08, right=0.97)
     _despine_axes([ax])
     save_figure(fig, output)
 
@@ -156,6 +157,7 @@ def plot_city_ranking(
         frameon=False,
         loc="lower right",
     )
+    fig.subplots_adjust(top=0.88, bottom=0.2, left=0.25, right=0.95)
     _despine_axes([ax])
     save_figure(fig, output)
 
@@ -225,9 +227,15 @@ def plot_inequality_panel(
         plt.Line2D([0], [0], color="#08519c", label="Median"),
         plt.Line2D([0], [0], color="#c6dbef", linewidth=6, alpha=0.7, label="p10–p90"),
     ]
-    fig.legend(handles=handles, loc="upper center", ncol=2, frameon=False)
-    fig.suptitle("Yearly PM2.5 spread for high-pollution cities")
-    fig.tight_layout(rect=[0, 0, 1, 0.95])
+    fig.suptitle("Yearly PM2.5 spread for high-pollution cities", y=0.97)
+    fig.legend(
+        handles=handles,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 0.95),
+        ncol=2,
+        frameon=False,
+    )
+    fig.subplots_adjust(top=0.88, bottom=0.12, left=0.07, right=0.98, hspace=0.3)
     _despine_axes(ax for ax in axes if ax.get_visible())
     save_figure(fig, output)
 
@@ -251,7 +259,7 @@ def plot_heatmap(data: pd.DataFrame, output: Path) -> None:
     if len(periods) == 1:
         axes = [axes]
 
-    month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    month_labels = ["Jan", "", "Mar", "", "May", "", "Jul", "", "Sep", "", "Nov", ""]
     vmax = grouped["pm25"].max()
     vmin = grouped["pm25"].min()
 
@@ -271,9 +279,10 @@ def plot_heatmap(data: pd.DataFrame, output: Path) -> None:
         ax.set_xlabel("Month")
         ax.set_xticklabels(month_labels, rotation=45, ha="right")
         ax.set_ylabel("Local Hour")
+        ax.set_yticks(range(0, 24, 3))
 
-    fig.suptitle("Average hourly PM2.5 by month and hour")
-    fig.tight_layout(rect=[0, 0, 1, 0.93])
+    fig.suptitle("Average hourly PM2.5 by month and hour", y=0.96)
+    fig.subplots_adjust(top=0.88, bottom=0.12, left=0.08, right=0.98, wspace=0.12)
     _despine_axes(axes)
     save_figure(fig, output)
 
@@ -330,8 +339,8 @@ def plot_exceedance_timeline(
     )
     ax.legend(frameon=False, ncol=2)
     ax.set_ylim(0, 1)
+    fig.subplots_adjust(top=0.88, bottom=0.16, left=0.08, right=0.97)
     _despine_axes([ax])
-    fig.tight_layout()
     save_figure(fig, output)
 
 
@@ -376,8 +385,8 @@ def plot_station_coverage(
     )
     ax.legend(title="City", frameon=False, ncol=2)
     ax.set_ylim(0, 1)
+    fig.subplots_adjust(top=0.88, bottom=0.18, left=0.08, right=0.97)
     _despine_axes([ax])
-    fig.tight_layout()
     save_figure(fig, output)
 
 
@@ -417,8 +426,8 @@ def plot_aqi_pm25_scatter(
         ax.set_xlim(left=0)
         ax.set_ylim(0, 500)
 
-    fig.suptitle("Relationship between PM2.5 and AQI")
-    fig.tight_layout(rect=[0, 0, 1, 0.94])
+    fig.suptitle("Relationship between PM2.5 and AQI", y=0.96)
+    fig.subplots_adjust(top=0.88, bottom=0.14, left=0.08, right=0.97, wspace=0.12)
     _despine_axes(axes)
     save_figure(fig, output)
 
@@ -452,11 +461,11 @@ def plot_choropleth(geo_data: gpd.GeoDataFrame, output: Path) -> None:
         ax.set_title(period.replace("_", " ").title())
         ax.axis("off")
 
-    fig.suptitle("Regional median PM2.5")
-    fig.tight_layout(rect=[0, 0, 1, 0.94])
+    fig.suptitle("Regional median PM2.5", y=0.96)
+    fig.subplots_adjust(top=0.88, bottom=0.05, left=0.03, right=0.95, wspace=0.04)
     sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
     sm._A = []
-    fig.colorbar(sm, ax=axes, fraction=0.035, pad=0.02, label="Median PM2.5 (µg/m³)")
+    fig.colorbar(sm, ax=list(axes), fraction=0.025, pad=0.015, label="Median PM2.5 (µg/m³)")
     _despine_axes(axes)
     save_figure(fig, output)
 
