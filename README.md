@@ -1,50 +1,45 @@
 # How War Affects Ukraine’s Ecology
 
-Minimal, reproducible analysis of hourly PM2.5 and AQI dynamics in Ukrainian cities before and during Russia’s full-scale invasion.
+Reproducible analysis of hourly PM2.5 and AQI in Ukrainian cities, comparing pre‑war and wartime periods.
 
-## Repository Layout
-- `dataset/` — source CSV exports from SaveEcoBot (hourly PM2.5/AQI plus city metadata).
-- `data/` — pipeline outputs (`raw/`, `processed/`).
-- `src/` — Python package with pipeline stages and figure scripts.
-- `notebooks/` — ad-hoc exploration (kept lightweight; pipeline remains primary).
-- `outputs/` — publication-ready graphics (`figures/`) and QA artefacts (`qa/`).
-- `config/` — configuration templates (e.g., `settings.example.yaml`).
-- `docs/` — auxiliary documentation (quality log, notes).
-- `Taskfile.yml` — reusable commands powered by [taskfile.dev](https://taskfile.dev).
+## Quick Start
+1) Unpack data
+```bash
+unzip dataset.zip   # creates dataset/
+```
+2) Set up environment
+```bash
+task setup          # creates .venv/ and installs deps
+```
+3) Run pipeline (ingest → aggregate → QA)
+```bash
+task pipeline
+```
+4) Render figures (optional)
+```bash
+task figures
+```
 
-## Setup
-1. Bootstrap the environment via Taskfile:
-   ```bash
-   task setup
-   ```
-   (Creates `.venv/`, upgrades `pip`, and installs the pinned requirements.)
-2. Unzip `dataset.zip` into the project root so that raw CSVs live under `dataset/` (the folder is git-ignored).
-   ```bash
-   unzip dataset.zip
-   ```
-3. Copy `config/settings.example.yaml` to `config/settings.yaml` and adjust paths if your data lives elsewhere.
+CLI help
+```bash
+python -m src.pipeline.run --help
+python -m src.visualization.run --help
+```
 
-## Data Pipeline
-- Run ingest → aggregate → QA in one go:
-  ```bash
-  task pipeline
-  ```
-- To include figure rendering as well:
-  ```bash
-  task full
-  ```
+## Key Commands
+- `task pipeline` — full data prep (writes to `data/processed/`).
+- `task full` — pipeline + figures.
+- `task clean` — remove outputs under `data/` and `outputs/`.
 
-## Figure Generation
-- Render the full figure bundle:
-  ```bash
-  task figures
-  ```
-- Individual visuals are available via `python -m src.visualization.run --help`. Figures are written to `outputs/figures/`.
-- City-level plots automatically filter to sensors with ≥70% daily coverage in at least four years (≥2 pre-war and ≥2 wartime) to keep comparisons consistent.
+## Project Layout
+- `dataset/` raw CSV exports and `geo/` shapes (git‑ignored; `dataset.zip` kept).
+- `data/` pipeline artefacts: `raw/`, `processed/` (git‑ignored).
+- `outputs/` figures (`figures/`) and QA (`qa/`) (git‑ignored).
+- `src/` Python package: `pipeline/` (Typer CLI), `visualization/`, `lib/`.
+- `Taskfile.yml` task runner; `docs/` notes; `notebooks/` ad‑hoc.
 
-Choropleth maps require administrative boundary geometries stored under `dataset/geo/` (already included as `ukraine_adm_boundaries.geojson`).
-
-## Next Steps
-- Finalize ingestion and aggregation code.
-- Acquire supplemental datasets noted in `Datasets-Outline.md` (administrative boundaries, attacks timeline, meteorology as needed).
-- Populate notebooks with exploratory diagnostics once the pipeline stabilizes.
+## Notes
+- WHO PM2.5 24‑hour guideline is 15 µg/m³.
+- Eligibility filter: include cities with ≥70% daily coverage in ≥4 years (≥2 pre‑war, ≥2 wartime).
+- Choropleth (figure 08) requires `dataset/geo/ukraine_adm_boundaries.geojson`.
+- Portions of this project were generated with assistance from an AI model.
