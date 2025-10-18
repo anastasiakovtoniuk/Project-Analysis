@@ -1,0 +1,11 @@
+pandas>=2.1
+numpy>=1.24
+pyarrow>=12.0
+matplotlib>=3.7
+seaborn>=0.13
+geopandas>=0.14
+shapely>=2.0
+mapclassify>=2.5
+typer>=0.9
+tqdm>=4.66
+pyyaml>=6.0

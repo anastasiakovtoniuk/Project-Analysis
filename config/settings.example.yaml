@@ -1,0 +1,14 @@
+paths:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  figures_dir: outputs/figures
+  qa_dir: outputs/qa
+  geo_dir: dataset/geo
+inputs:
+  hourly_pattern: dataset/saveecobot_cities_pm25_and_aqi_pm25_*.csv
+  cities_metadata: dataset/saveecobot_cities.csv
+  admin_boundaries: dataset/geo/ukraine_adm_boundaries.geojson
+processing:
+  timezone: Europe/Kyiv
+  pm25_guideline: 15
+  wartime_start: 2022-02-24
