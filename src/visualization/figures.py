@@ -300,25 +300,7 @@ def plot_inequality_panel(
     for ax in axes[len(top_cities) :]:
         ax.set_visible(False)
 
-    handles = [
-        plt.Line2D([0], [0], color="#08519c", label="Median"),
-        plt.Line2D([0], [0], color="#c6dbef", linewidth=6, alpha=0.7, label="p10–p90"),
-        plt.Line2D(
-            [0],
-            [0],
-            color="#d62728",
-            linestyle="--",
-            label=f"WHO guideline ({PM25_GUIDELINE:.0f} µg/m³)",
-        ),
-    ]
     fig.suptitle("Yearly PM2.5 spread for high-pollution cities", y=0.97)
-    fig.legend(
-        handles=handles,
-        loc="upper center",
-        bbox_to_anchor=(0.5, 0.95),
-        ncol=2,
-        frameon=False,
-    )
     fig.subplots_adjust(top=0.88, bottom=0.12, left=0.07, right=0.98, hspace=0.3)
     _despine_axes(ax for ax in axes if ax.get_visible())
     save_figure(fig, output)
@@ -435,7 +417,7 @@ def plot_exceedance_timeline(
         ylabel="Share of hours > 15 µg/m³ (30-day avg)",
         title="PM2.5 guideline exceedance over time",
     )
-    ax.legend(frameon=False, ncol=2)
+    ax.legend(frameon=False, ncol=2, loc="upper left", bbox_to_anchor=(0.0, 1.0))
     ax.set_ylim(0, 1)
 
     ymin, ymax = ax.get_ylim()
