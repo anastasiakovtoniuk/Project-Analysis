@@ -1,4 +1,5 @@
 """Figure generation utilities using processed SaveEcoBot datasets."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -6,10 +7,10 @@ from typing import Any, Iterable, List, Optional, Set
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from matplotlib.ticker import MaxNLocator
 
 from src.lib import (
     MIN_COVERAGE_RATIO,
@@ -24,6 +25,20 @@ sns.set_theme(style="whitegrid", context="talk")
 PRIMARY_COLORS = {"pre_war": "#1f78b4", "wartime": "#e31a1c"}
 FIGSIZE_WIDE = (12, 6.75)
 FIGSIZE_TALL = (10, 7.0)
+CONFLICT_EVENTS = [
+    ("2022-02-24", "Invasion begins"),
+    ("2022-10-10", "Power grid strikes"),
+    ("2023-06-06", "Kakhovka dam breach"),
+]
+AQI_CATEGORIES = [
+    (0, 50, "Good", "#00e400"),
+    (50, 100, "Moderate", "#ffff00"),
+    (100, 150, "Unhealthy for SG", "#ff7e00"),
+    (150, 200, "Unhealthy", "#ff0000"),
+    (200, 300, "Very Unhealthy", "#8f3f97"),
+    (300, 500, "Hazardous", "#7e0023"),
+]
+PM25_GUIDELINE = 15.0
 
 
 def _ensure_period_order(periods: Iterable[str]) -> List[str]:
@@ -34,6 +49,26 @@ def _ensure_period_order(periods: Iterable[str]) -> List[str]:
 def _despine_axes(ax_list: Iterable[plt.Axes]) -> None:
     for ax in ax_list:
         sns.despine(ax=ax)
+
+
+def _annotate_aqi_categories(ax: plt.Axes) -> None:
+    """Shade AQI categories and label EPA breakpoints."""
+    ymin, ymax = ax.get_ylim()
+    for low, high, label, color in AQI_CATEGORIES:
+        ax.axhspan(low, high, color=color, alpha=0.08, zorder=0)
+        ax.axhline(high, color=color, linewidth=0.8, alpha=0.4, zorder=0.1)
+        y_frac = ((low + high) / 2 - ymin) / (ymax - ymin) if ymax > ymin else 0.5
+        ax.text(
+            0.98,
+            y_frac,
+            label,
+            transform=ax.transAxes,
+            va="center",
+            ha="right",
+            fontsize=8,
+            color="#333333",
+            bbox=dict(facecolor="white", alpha=0.7, edgecolor="none", pad=0.5),
+        )
 
 
 def plot_distribution_shift(
@@ -64,7 +99,13 @@ def plot_distribution_shift(
         alpha=0.7,
         ax=ax,
     )
-    ax.axvline(15, color="#444444", linestyle="--", linewidth=1, label="WHO guideline")
+    ax.axvline(
+        PM25_GUIDELINE,
+        color="#444444",
+        linestyle="--",
+        linewidth=1,
+        label="WHO guideline",
+    )
     ax.set(
         xlabel="Daily mean PM2.5 (µg/m³)",
         ylabel="Density",
@@ -98,9 +139,9 @@ def plot_city_ranking(
             np.nan,
         )
     )
-    period = (
-        period.groupby(["city_id", "city_name", "period"], as_index=False)["pm25_median"].mean()
-    )
+    period = period.groupby(["city_id", "city_name", "period"], as_index=False)[
+        "pm25_median"
+    ].mean()
     coverage = (
         data[data["aggregation_level"] == "period"]
         .assign(
@@ -151,8 +192,24 @@ def plot_city_ranking(
     ax.grid(axis="y", linestyle="--", alpha=0.3)
     ax.legend(
         handles=[
-            plt.Line2D([0], [0], marker="o", color="w", label="Pre-war", markerfacecolor=PRIMARY_COLORS["pre_war"], markersize=8),
-            plt.Line2D([0], [0], marker="o", color="w", label="Wartime", markerfacecolor=PRIMARY_COLORS["wartime"], markersize=8),
+            plt.Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                label="Pre-war",
+                markerfacecolor=PRIMARY_COLORS["pre_war"],
+                markersize=8,
+            ),
+            plt.Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                label="Wartime",
+                markerfacecolor=PRIMARY_COLORS["wartime"],
+                markersize=8,
+            ),
         ],
         frameon=False,
         loc="lower right",
@@ -180,11 +237,16 @@ def plot_inequality_panel(
             np.nan,
         )
     )
-    wartime = period[(period["period"] == "wartime") & (period["coverage_ratio"] >= MIN_COVERAGE_RATIO)]
+    wartime = period[
+        (period["period"] == "wartime")
+        & (period["coverage_ratio"] >= MIN_COVERAGE_RATIO)
+    ]
     if eligible_ids:
         wartime = wartime[wartime["city_id"].isin(eligible_ids)]
     top_cities = (
-        wartime.sort_values("pm25_median", ascending=False)["city_name"].head(n_cities).tolist()
+        wartime.sort_values("pm25_median", ascending=False)["city_name"]
+        .head(n_cities)
+        .tolist()
     )
 
     yearly = data[data["aggregation_level"] == "year"].copy()
@@ -211,9 +273,24 @@ def plot_inequality_panel(
             alpha=0.7,
             label="p10–p90",
         )
-        ax.plot(subset["year"], subset["pm25_median"], color="#08519c", linewidth=1.5, label="Median")
+        ax.plot(
+            subset["year"],
+            subset["pm25_median"],
+            color="#08519c",
+            linewidth=1.5,
+            label="Median",
+        )
+        ax.axhline(
+            PM25_GUIDELINE,
+            color="#d62728",
+            linestyle="--",
+            linewidth=1.0,
+            alpha=0.9,
+        )
         if subset["year"].max() >= 2022:
-            ax.axvspan(2022 - 0.5, subset["year"].max() + 0.5, color="#fee0d2", alpha=0.4)
+            ax.axvspan(
+                2022 - 0.5, subset["year"].max() + 0.5, color="#fee0d2", alpha=0.4
+            )
         ax.set_title(city)
         ax.set_xlabel("Year")
         ax.set_ylabel("PM2.5 (µg/m³)")
@@ -226,6 +303,13 @@ def plot_inequality_panel(
     handles = [
         plt.Line2D([0], [0], color="#08519c", label="Median"),
         plt.Line2D([0], [0], color="#c6dbef", linewidth=6, alpha=0.7, label="p10–p90"),
+        plt.Line2D(
+            [0],
+            [0],
+            color="#d62728",
+            linestyle="--",
+            label=f"WHO guideline ({PM25_GUIDELINE:.0f} µg/m³)",
+        ),
     ]
     fig.suptitle("Yearly PM2.5 spread for high-pollution cities", y=0.97)
     fig.legend(
@@ -249,7 +333,9 @@ def plot_heatmap(data: pd.DataFrame, output: Path) -> None:
         frame["period"] = np.where(frame["is_wartime"], "wartime", "pre_war")
 
     grouped = (
-        frame.groupby(["period", "month", "hour_local"], dropna=False)["pm25"].mean().reset_index()
+        frame.groupby(["period", "month", "hour_local"], dropna=False)["pm25"]
+        .mean()
+        .reset_index()
     )
     periods = _ensure_period_order(grouped["period"].unique())
     if not periods:
@@ -304,9 +390,11 @@ def plot_exceedance_timeline(
         raise ValueError("Daily dataset empty; cannot create exceedance timeline")
 
     # Weighted national average by available hours.
-    national = daily.groupby("date_local")[
-        ["exceedance_hours", "available_hours"]
-    ].sum().reset_index()
+    national = (
+        daily.groupby("date_local")[["exceedance_hours", "available_hours"]]
+        .sum()
+        .reset_index()
+    )
     national["exceedance_share"] = np.where(
         national["available_hours"] > 0,
         national["exceedance_hours"] / national["available_hours"],
@@ -315,12 +403,18 @@ def plot_exceedance_timeline(
     national["city_name"] = "National average"
 
     wartime_daily = daily[daily["period"] == "wartime"].copy()
-    wartime_daily = wartime_daily.assign(coverage_flag=wartime_daily["available_hours"] >= 18)
+    wartime_daily = wartime_daily.assign(
+        coverage_flag=wartime_daily["available_hours"] >= 18
+    )
     coverage_ratio = wartime_daily.groupby("city_name")["coverage_flag"].mean()
     coverage_ratio = coverage_ratio[coverage_ratio >= 0.7]
     exceed_means = wartime_daily.groupby("city_name")["exceedance_share"].mean()
     wartime_means = (
-        exceed_means.reindex(coverage_ratio.index).dropna().sort_values(ascending=False).head(cities).index
+        exceed_means.reindex(coverage_ratio.index)
+        .dropna()
+        .sort_values(ascending=False)
+        .head(cities)
+        .index
     )
     top_cities = daily[daily["city_name"].isin(wartime_means)].copy()
 
@@ -329,7 +423,11 @@ def plot_exceedance_timeline(
     fig, ax = plt.subplots(figsize=FIGSIZE_WIDE)
     for name, group in combined.groupby("city_name"):
         group = group.sort_values("date_local")
-        ax.plot(group["date_local"], group["exceedance_share"].rolling(30, min_periods=7).mean(), label=name)
+        ax.plot(
+            group["date_local"],
+            group["exceedance_share"].rolling(30, min_periods=7).mean(),
+            label=name,
+        )
 
     ax.axhline(0.25, color="#999999", linestyle="--", linewidth=0.8)
     ax.set(
@@ -339,6 +437,27 @@ def plot_exceedance_timeline(
     )
     ax.legend(frameon=False, ncol=2)
     ax.set_ylim(0, 1)
+
+    ymin, ymax = ax.get_ylim()
+    y_text = ymax - 0.02
+    min_date, max_date = daily["date_local"].min(), daily["date_local"].max()
+    for event_date, label in CONFLICT_EVENTS:
+        ts = pd.Timestamp(event_date)
+        if ts < min_date or ts > max_date:
+            continue
+        ax.axvline(ts, color="#ff7f0e", linestyle=":", linewidth=1.2, alpha=0.9)
+        ax.text(
+            ts,
+            y_text,
+            label,
+            rotation=90,
+            va="top",
+            ha="right",
+            fontsize=9,
+            color="#ff7f0e",
+            bbox=dict(facecolor="white", alpha=0.75, edgecolor="none", pad=1),
+        )
+
     fig.subplots_adjust(top=0.88, bottom=0.16, left=0.08, right=0.97)
     _despine_axes([ax])
     save_figure(fig, output)
@@ -362,7 +481,9 @@ def plot_station_coverage(
     )
     wartime_cov = (
         daily_monthly[daily_monthly["date_local"] >= pd.Timestamp(2022, 1, 1)]
-        .groupby("city_name")["coverage_mean"].mean().sort_values(ascending=False)
+        .groupby("city_name")["coverage_mean"]
+        .mean()
+        .sort_values(ascending=False)
     )
     top_cities = wartime_cov.head(cities).index
     subset = daily_monthly[daily_monthly["city_name"].isin(top_cities)]
@@ -408,7 +529,9 @@ def plot_aqi_pm25_scatter(
     frame["period"] = np.where(frame["is_wartime"], "wartime", "pre_war")
     periods = _ensure_period_order(frame["period"].unique())
 
-    fig, axes = plt.subplots(1, len(periods), figsize=FIGSIZE_WIDE, sharex=True, sharey=True)
+    fig, axes = plt.subplots(
+        1, len(periods), figsize=FIGSIZE_WIDE, sharex=True, sharey=True
+    )
     if len(periods) == 1:
         axes = [axes]
 
@@ -420,11 +543,12 @@ def plot_aqi_pm25_scatter(
         ax.set(
             xlabel="PM2.5 (µg/m³)",
             ylabel="AQI",
-            title=f"{period.replace('_', ' ').title()}"
+            title=f"{period.replace('_', ' ').title()}",
         )
-        ax.axvline(15, color="#ff7f00", linestyle="--", linewidth=1)
+        ax.axvline(PM25_GUIDELINE, color="#ff7f00", linestyle="--", linewidth=1)
         ax.set_xlim(left=0)
         ax.set_ylim(0, 500)
+        _annotate_aqi_categories(ax)
 
     fig.suptitle("Relationship between PM2.5 and AQI", y=0.96)
     fig.subplots_adjust(top=0.88, bottom=0.14, left=0.08, right=0.97, wspace=0.12)
@@ -465,7 +589,9 @@ def plot_choropleth(geo_data: gpd.GeoDataFrame, output: Path) -> None:
     fig.subplots_adjust(top=0.88, bottom=0.05, left=0.03, right=0.95, wspace=0.04)
     sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
     sm._A = []
-    fig.colorbar(sm, ax=list(axes), fraction=0.025, pad=0.015, label="Median PM2.5 (µg/m³)")
+    fig.colorbar(
+        sm, ax=list(axes), fraction=0.025, pad=0.015, label="Median PM2.5 (µg/m³)"
+    )
     _despine_axes(axes)
     save_figure(fig, output)
 

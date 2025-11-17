@@ -145,8 +145,8 @@ def _city_distributions(daily: pd.DataFrame) -> pd.DataFrame:
         "days": ("date_local", "count"),
         "pm25_mean": ("pm25_mean", "mean"),
         "pm25_median": ("pm25_median", "median"),
-        "pm25_p90": ("pm25_median", lambda s: float(s.quantile(0.9))),
-        "pm25_p10": ("pm25_median", lambda s: float(s.quantile(0.1))),
+        "pm25_p90": ("pm25_p90", "mean"),
+        "pm25_p10": ("pm25_p10", "mean"),
         "exceedance_share": ("exceedance_share", "mean"),
         "available_hours_mean": ("available_hours", "mean"),
         "days_with_coverage_ge18": ("available_hours", _coverage),
@@ -178,7 +178,7 @@ def _region_period_summary(daily: pd.DataFrame) -> pd.DataFrame:
             days=("date_local", "count"),
             pm25_mean=("pm25_mean", "mean"),
             pm25_median=("pm25_median", "median"),
-            pm25_p90=("pm25_median", lambda s: float(s.quantile(0.9))),
+            pm25_p90=("pm25_p90", "mean"),
             exceedance_share=("exceedance_share", "mean"),
         )
         .reset_index()
