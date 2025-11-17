@@ -9,15 +9,15 @@ unzip dataset.zip   # creates dataset/
 ```
 2) Set up environment
 ```bash
-task setup          # creates .venv/ and installs deps
+make setup          # creates .venv/ and installs deps
 ```
 3) Run pipeline (ingest → aggregate → QA)
 ```bash
-task pipeline
+make pipeline
 ```
 4) Render figures (optional)
 ```bash
-task figures
+make figures
 ```
 
 CLI help
@@ -27,16 +27,16 @@ python -m src.visualization.run --help
 ```
 
 ## Key Commands
-- `task pipeline` — full data prep (writes to `data/processed/`).
-- `task full` — pipeline + figures.
-- `task clean` — remove outputs under `data/` and `outputs/`.
+- `make pipeline` — full data prep (writes to `data/processed/`).
+- `make full` — pipeline + figures.
+- `make clean` — remove outputs under `data/` and `outputs/`.
 
 ## Project Layout
 - `dataset/` raw CSV exports and `geo/` shapes (git‑ignored; `dataset.zip` kept).
 - `data/` pipeline artefacts: `raw/`, `processed/` (git‑ignored).
 - `outputs/` figures (`figures/`) and QA (`qa/`) (git‑ignored).
 - `src/` Python package: `pipeline/` (Typer CLI), `visualization/`, `lib/`.
-- `Taskfile.yml` task runner; `docs/` notes; `notebooks/` ad‑hoc.
+- `Makefile` automation entrypoints; `docs/` notes; `notebooks/` ad-hoc.
 
 ## Notes
 - WHO PM2.5 24‑hour guideline is 15 µg/m³.
